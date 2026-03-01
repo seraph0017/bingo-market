@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 from app.main import app
 from app.core.database import Base
+from app.core.config import settings
 
 
 # Test client
