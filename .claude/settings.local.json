@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"=== TC-USER-003: 重复用户注册测试 ===\" && curl -s -X POST http://localhost:8000/api/v1/auth/register -H \"Content-Type: application/json\" -d '{\"email\":\"testuser2026@test.com\",\"password\":\"TestPass123\",\"full_name\":\"Test User\"}' | jq .detail)",
+      "Bash(echo \"=== TC-USER-010: 用户登录测试 ===\" && curl -s -X POST http://localhost:8000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"testuser2026@test.com\",\"password\":\"TestPass123\"}' | jq .)"
+    ]
+  }
+}
