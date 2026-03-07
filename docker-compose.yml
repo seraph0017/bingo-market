@@ -1,0 +1,145 @@
+# Bingo Market - Docker Compose for Local Development
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: bingo-postgres
+    environment:
+      POSTGRES_USER: bingo
+      POSTGRES_PASSWORD: bingo123456
+      POSTGRES_DB: bingo_market
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bingo -d bingo_market"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bingo-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: bingo-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bingo-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./code/backend
+      dockerfile: Dockerfile
+    container_name: bingo-backend
+    environment:
+      # Application
+      APP_NAME: Bingo Market
+      APP_VERSION: 0.1.0
+      DEBUG: "true"
+      ENVIRONMENT: development
+
+      # Server
+      HOST: 0.0.0.0
+      PORT: 8000
+
+      # Database
+      DATABASE_URL: postgresql+asyncpg://bingo:bingo123456@postgres:5432/bingo_market
+
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+
+      # Security
+      SECRET_KEY: dev-secret-key-change-in-production-32-char-min
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 120
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+
+      # Compliance
+      VND_DAILY_LIMIT: 500000
+      VND_MONTHLY_LIMIT: 5000000
+      MIN_AGE: 18
+      MIN_RECHARGE_AMOUNT: 10000
+
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+
+      # LLM
+      LLM_PROVIDER: anthropic
+      ANTHROPIC_API_KEY: ""
+      OPENAI_API_KEY: ""
+      LLM_TEST_MODE: "true"
+
+      # Payment
+      MOMO_ACCESS_KEY: ""
+      MOMO_SECRET_KEY: ""
+      MOMO_PARTNER_CODE: ""
+      ZALOPAY_APP_ID: ""
+      ZALOPAY_KEY_1: ""
+      ZALOPAY_KEY_2: ""
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./code/backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - bingo-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./code/frontend
+      dockerfile: Dockerfile
+    container_name: bingo-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - bingo-network
+
+  # # Celery Worker (optional)
+  # celery-worker:
+  #   build:
+  #     context: ./code/backend
+  #     dockerfile: Dockerfile
+  #   container_name: bingo-celery-worker
+  #   environment:
+  #     DATABASE_URL: postgresql+asyncpg://bingo:bingo123456@postgres:5432/bingo_market
+  #     REDIS_URL: redis://redis:6379/0
+  #     CELERY_BROKER_URL: redis://redis:6379/1
+  #     CELERY_RESULT_BACKEND: redis://redis:6379/2
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   command: celery -A app.core.celery worker --loglevel=info
+  #   networks:
+  #     - bingo-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  bingo-network:
+    driver: bridge

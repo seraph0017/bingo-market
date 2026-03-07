@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy import select
 
 from app.schemas.auth import (
     RegisterRequest,
@@ -17,6 +18,7 @@ from app.schemas.auth import (
     SendCodeRequest,
     SMSLoginRequest,
 )
+from app.models.user import User
 from app.services.auth import AuthService
 from app.services.audit import AuditService
 from app.services.device import DeviceService

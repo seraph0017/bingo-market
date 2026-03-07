@@ -8,6 +8,11 @@ from app.schemas.auth import (
     TokenResponse,
     VerifyIdentityResponse,
     UserInfo,
+    RefreshTokenRequest,
+    ChangePasswordRequest,
+    ResetPasswordRequest,
+    SendCodeRequest,
+    SMSLoginRequest,
 )
 from app.schemas.wallet import (
     WalletInfo,
@@ -26,6 +31,11 @@ __all__ = [
     "TokenResponse",
     "VerifyIdentityResponse",
     "UserInfo",
+    "RefreshTokenRequest",
+    "ChangePasswordRequest",
+    "ResetPasswordRequest",
+    "SendCodeRequest",
+    "SMSLoginRequest",
     # Wallet
     "WalletInfo",
     "CreateRechargeOrderRequest",
